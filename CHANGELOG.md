@@ -164,6 +164,31 @@ it diverts from landfill.
 *Things that were deleted — deliberately, and only after checking
 nothing used them.*
 
+### The app sidebar and profile chip on the sign-in pages
+- **Before:** Every page carried the same app shell — the sidebar
+  (Home, Post Item, Requests, Impact, Profile, Switch Account) and
+  the top bar's user corner (the ReUse Coins balance and the profile
+  chip). Both showed up on the "Choose Your Role" page
+  (`login.html`) and the four role sign-in pages
+  (`login-member.html`, `login-donor.html`, `login-moderator.html`,
+  `login-admin.html`), even though nobody had signed in yet. Worse,
+  the profile chip did not stay blank: the sign-in pages filled it
+  with the demo member (Jordan Lee) and his coin balance, as if he
+  were already signed in.
+- **Now:** The sidebar block and the top bar's user corner are
+  removed from those five pages. The sign-in cards now sit centered
+  on the page with just the Villa-Reuse brand in the top bar, the
+  way a sign-in screen should look. Nothing on a sign-in page names
+  or implies a signed-in user any more. The sidebar, profile chip,
+  and coin balance are unchanged on the signed-in app pages (Home,
+  Post Item, Requests, Moderation, Admin, Impact, Profile), where
+  they show the real signed-in user as before.
+- **Why:** A navigation menu and a personal profile chip make no
+  sense before sign-in — the menu's links lead to pages that need
+  an account, and the chip presented a specific person as the
+  current user when there was none. Showing them at the sign-in
+  step was a bug, not a feature.
+
 ### The unused `FilterStore` class (`src/state/store.ts`)
 - **What it was:** A small state-management class for the home page
   filters, left over from an earlier approach.

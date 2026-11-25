@@ -8,6 +8,9 @@
   color: var(--c-green-600);
 }
 
+/* Posting mode tints the feed eyebrow gold, matching the mode switch. */
+.eyebrow--posting { color: var(--c-gold); }
+
 .section-head {
   display: flex;
   align-items: flex-end;

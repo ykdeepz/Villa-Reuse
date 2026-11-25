@@ -55,7 +55,10 @@ async function bootstrap(): Promise<void> {
         ? "Items you posted for the community — tap one to review it."
         : "Pre-loved items, ready for their next chapter.";
     }
-    if (feedEyebrow) feedEyebrow.textContent = posting ? "POSTED BY YOU" : "AVAILABLE NEAR YOU";
+    if (feedEyebrow) {
+      feedEyebrow.textContent = posting ? "POSTED BY YOU" : "AVAILABLE NEAR YOU";
+      feedEyebrow.classList.toggle("eyebrow--posting", posting);
+    }
     const heroBtn = document.getElementById("donate-btn");
     if (heroBtn) {
       heroBtn.innerHTML = posting

@@ -42,9 +42,17 @@
 
 .mode-switch__btn:hover { color: var(--c-text); }
 
-.mode-switch__btn--active {
+/* The two modes are colour-coded with the palette's own colours:
+   Browsing is the theme green, Posting is the theme gold. */
+.mode-switch__btn--active[data-mode="browsing"] {
   background: var(--c-green-600);
   color: #fff;
 }
 
-.mode-switch__btn--active:hover { color: #fff; }
+.mode-switch__btn--active[data-mode="posting"] {
+  background: var(--c-gold);
+  color: var(--c-text);
+}
+
+.mode-switch__btn--active[data-mode="browsing"]:hover { color: #fff; }
+.mode-switch__btn--active[data-mode="posting"]:hover { color: var(--c-text); }

@@ -368,6 +368,21 @@ page).
   switch is how the app knows what you came to do — the same split
   Facebook Marketplace makes between buying and selling.
 
+### Colour-coded modes (improved, Round 3)
+- **What changed:** The two modes now have their own colours, taken
+  from the palette the site already uses. In the sidebar switch,
+  the selected *Browsing* button is filled with the theme green
+  (`--c-green-600`), and the selected *Posting* button is filled
+  with the theme gold (`--c-gold`). The small heading above the
+  Home feed follows the same code: "AVAILABLE NEAR YOU" is green
+  in Browsing mode, and "POSTED BY YOU" is gold in Posting mode.
+  No new colours were introduced and nothing else in the palette
+  changed.
+- **Why:** A filled button alone was easy to miss. Colour makes
+  the current mode readable at a glance — green means you are
+  looking at the community's items, gold means you are looking
+  at your own postings.
+
 ### Search in the top bar (added, Round 3)
 - **What was added:** A search field in the signed-in top bar. On
   Home it is wired to the feed's existing search filter (typing in

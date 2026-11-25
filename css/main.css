@@ -43,6 +43,7 @@
 @import "components/management-tables.css";
 
 /* /improvement pass */
+@import "components/mode-switch.css";
 @import "components/feedback.css";
 @import "components/notifications.css";
 @import "components/listings.css";

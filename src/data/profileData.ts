@@ -8,7 +8,6 @@ export interface ActivityEntry {
 
 export type UserRole =
   | "Community Member"
-  | "Item Donor / Provider"
   | "Community Moderator"
   | "System Administrator";
 
@@ -54,8 +53,8 @@ export const DEMO_USERS: Record<string, Profile> = {
     coins: 340,
     itemsShared: 24,
     wasteSavedKg: 285,
-    role: "Item Donor / Provider",
-    roleScope: "Provide items for donation or exchange and update item availability.",
+    role: "Community Member",
+    roleScope: "Post items, browse listings, request exchanges/donations, and manage your posts.",
   },
   moderator: {
     id: "usr_moderator",

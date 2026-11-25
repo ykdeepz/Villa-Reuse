@@ -18,6 +18,13 @@ The work happened in two rounds:
   made the numbers real (Impact page), added notifications, let users
   manage their own listings and favorites, polished the feedback and
   the mobile layout, and removed code that was no longer used.
+- **Round 3 — one account for everything.** The Community Member and
+  Item Donor accounts were merged into a single unified account
+  (Facebook Marketplace style): one sign-in page with a Create
+  account option instead of a role chooser, a Browsing / Posting
+  mode switch in the sidebar, a search box in the top bar, a small
+  activity summary on the Profile page, and friendlier empty states
+  (see *Changed*, *Improved/Added*, and *Removed*).
 
 Nothing about the system's purpose changed in either round: neighbors
 donate or exchange pre-loved items, earn ReUse Coins, moderators keep
@@ -157,6 +164,44 @@ it diverts from landfill.
 - **Why:** Real users make mistakes; a request lifecycle needs an
   exit. It also completes the status story the system already told.
 
+### One account instead of two (Member + Donor merged)
+- **Before:** Villa-Reuse had two separate community account types —
+  "Community Member" and "Item Donor / Provider" — with their own
+  sign-in pages. The same neighbor needed two different accounts
+  depending on whether they wanted to ask for something or give
+  something away, and the Requests page split "incoming" and "sent"
+  requests by which role you happened to sign in as.
+- **Now:** There is **one unified account**. The same signed-in
+  person can post items *and* request items; the Requests page shows
+  both directions for that person (requests received on their items,
+  and requests they sent). The two demo logins
+  (`member@villareuse.org`, `donor@villareuse.org`) both still work
+  and are now the same account type — the donor login keeps its
+  posted items and history — and existing databases are migrated
+  automatically on server start. Moderator and Admin accounts are
+  unchanged.
+- **Why:** This is how Facebook Marketplace works, and it matches
+  real life: neighbors both give and receive. Two accounts for one
+  person was ceremony, not safety — posting and requesting were never
+  actually restricted by role on the server anyway.
+
+### Sign-in: one page with Sign in / Create account
+- **Before:** Signing in started on a "Choose Your Role" page
+  (`login.html`) with four portal cards, each leading to its own
+  sign-in page. There was a sign-up page planned in the code, but it
+  was never built — new accounts could not actually be created.
+- **Now:** `login.html` is a single sign-in page (email + password)
+  with a **Create an account** option that opens a sign-up form on
+  the same page; creating an account now works end to end (new
+  `/api/auth/register` endpoint, duplicate emails rejected) and
+  signs you straight in. `login-member.html` and `login-donor.html`
+  redirect to the single page, so no old link is dead. Moderators
+  and Admins keep their own sign-in pages, linked discreetly at the
+  bottom of the page as "Staff sign in". Logging out now returns to
+  this single page.
+- **Why:** One door is easier to explain and to use than five, and a
+  community system that nobody can join is a demo, not a system.
+
 ---
 
 ## 2. Removed
@@ -188,6 +233,17 @@ nothing used them.*
   an account, and the chip presented a specific person as the
   current user when there was none. Showing them at the sign-in
   step was a bug, not a feature.
+
+### The "Switch Account" sidebar link (removed, Round 3)
+- **What it was:** A sidebar link on every signed-in page that led
+  back to the "Choose Your Role" page, so a user could sign in as a
+  different demo role.
+- **Why removed:** With one unified account there is no second
+  community role to switch to, and the top bar already has a Log
+  out button — the link was a duplicate door. The role chooser
+  page itself is gone too (see *Changed → Sign-in*); the old
+  member/donor sign-in pages remain only as redirects to the
+  single login page so no bookmark or link breaks.
 
 ### The unused `FilterStore` class (`src/state/store.ts`)
 - **What it was:** A small state-management class for the home page
@@ -300,6 +356,47 @@ page).
   content. A presenter can now resize the window live without the
   layout falling apart.
 
+### Browsing / Posting mode switch (added, Round 3)
+- **What was added:** A small "I am: Browsing / Posting" switch at
+  the top of the sidebar, shown to community accounts. *Browsing*
+  shows the normal community feed on Home; *Posting* takes you to
+  the Post Item page, and Home then shows **Your listings** — only
+  your own items, with a "Post another item" call-to-action. The
+  choice is stored in the browser (localStorage) and survives page
+  changes and reloads.
+- **Why:** With member and donor merged into one account, the
+  switch is how the app knows what you came to do — the same split
+  Facebook Marketplace makes between buying and selling.
+
+### Search in the top bar (added, Round 3)
+- **What was added:** A search field in the signed-in top bar. On
+  Home it is wired to the feed's existing search filter (typing in
+  either box updates the other — one search behavior, not two);
+  from any other page, submitting it jumps to Home with the search
+  applied (`index.html?q=…`).
+- **Why:** Search used to exist only inside the Home page's
+  toolbar, so from Profile or Requests finding an item meant
+  navigating first and searching second.
+
+### Profile activity summary (added, Round 3)
+- **What was added:** A "Your activity at a glance" row at the top
+  of the Profile page: items posted, requests made, and ReUse Coin
+  balance — counted live from the same items/requests data the rest
+  of the page uses, so it can never disagree with the lists below.
+- **Why:** The unified account's whole point is that one person
+  both gives and asks; the summary is where that shows in one
+  glance.
+
+### Friendly empty states (improved, Round 3)
+- **What changed:** Empty lists used to render as a bare line of
+  grey text (or nothing obvious). Now the Home feed with no
+  matches, the Requests tabs with no requests, and the Profile's
+  My Listings with no postings each show a short friendly message
+  plus a clear next-step button — "Post the first item",
+  "Browse items", "Clear filters".
+- **Why:** A blank area looks like a bug during a presentation; a
+  message with a button looks like a product.
+
 ### Presenter support (added)
 - **What was added:** This changelog, an expanded README (feature
   list, full API table, the impact formula, and a "how it works"
@@ -309,7 +406,7 @@ page).
   ("why SQLite?", "why is the password safe?", "where does 1,200 kg
   come from?" — it doesn't anymore) has a written answer.
 
-### Test evidence (added, Round 1 + Round 2)
+### Test evidence (added, Round 1 + Round 2 + Round 3)
 - **Round 1:** TypeScript compiled clean; a 35-check API suite passed
   (logins for all four roles, 401/403 enforcement, the full request
   lifecycle, photo upload, moderation, admin suspend/reactivate,
@@ -326,6 +423,25 @@ page).
   member's own items, and the Impact page shows the database's real
   figures. After testing, all test data was wiped — the project
   ships in its clean, seeded demo state.
+- **Round 3:** TypeScript compiled clean. API tests: a brand-new
+  account registered through `/api/auth/register` (duplicate email
+  correctly rejected with 409), posted an item, and requested
+  another user's item; the former donor account — now a unified
+  Community Member — requested an item and accepted an incoming
+  request on its own listing; moderator routes still returned 200
+  for moderators and 403 for members. A 24-step browser test then
+  walked the real pages: sign-up from the login page, posting via
+  the Posting mode, the mode persisting across a reload, requesting
+  from the item modal, top-bar search filtering the feed, the
+  friendly empty state, the Profile summary showing the test
+  account's real numbers (1 posted, 1 requested, 15 coins), logout
+  landing on the single login page, both old sign-in pages
+  redirecting, and the moderator sign-in reaching the Moderation
+  page. All checks passed (one assertion about the modal's DOM
+  node was corrected during testing — the modal closes by hiding,
+  and the request itself was confirmed in the Sent tab). Tests ran
+  against a throwaway copy with a fresh database, so the shipped
+  demo data is untouched.
 
 ---
 
@@ -333,9 +449,10 @@ page).
 
 So the presenter is never caught out:
 
-- **No sign-up page.** Accounts are the four seeded demo users; that
-  is what the presentation needs, but a public launch would need
-  registration and password changes.
+- **Sign-up is basic.** Since Round 3 anyone can create an account
+  on the login page (name, email, password), but there is no email
+  verification and no way to change a password yet — fine for the
+  presentation, needed before any public launch.
 - **Sessions last 12 hours** and live in the same database file;
   fine for a classroom demo, not a production setup.
 - **The seeded Impact counter starts at 0 kg** (see *Changed →

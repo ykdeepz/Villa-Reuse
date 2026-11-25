@@ -28,6 +28,7 @@ export function renderItemGrid(
   counter: HTMLElement,
   items: Item[],
   onViewItem?: (item: Item) => void,
+  onClearFilters?: () => void,
 ): void {
   grid.replaceChildren();
 
@@ -35,9 +36,19 @@ export function renderItemGrid(
     const empty = document.createElement("div");
     empty.className = "grid__empty-container";
     empty.innerHTML = `
-      <p class="grid__empty">No items match your selected filters.</p>
-      <small style="color:var(--c-muted); display:block; margin-top:6px;">Try clearing filters or search for another item.</small>
+      <p class="grid__empty">Nothing here yet — no items match what you're looking for.</p>
+      <small style="color:var(--c-muted); display:block; margin-top:6px;">Try a different search, clear the filters, or be the first to share something with the neighborhood.</small>
+      <div class="empty-actions">
+        <button type="button" class="btn btn--ghost" data-action="clear-filters">Clear filters</button>
+        <a class="btn btn--solid" href="donate.html">Post the first item</a>
+      </div>
     `;
+    const clearBtn = empty.querySelector<HTMLButtonElement>('[data-action="clear-filters"]');
+    if (clearBtn && onClearFilters) {
+      clearBtn.addEventListener("click", onClearFilters);
+    } else if (clearBtn) {
+      clearBtn.style.display = "none";
+    }
     grid.append(empty);
   } else {
     items.forEach((item) => {

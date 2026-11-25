@@ -84,7 +84,7 @@ export interface SystemUser {
   id: string;
   name: string;
   email: string;
-  role: "Community Member" | "Item Donor / Provider" | "Community Moderator" | "System Administrator";
+  role: "Community Member" | "Community Moderator" | "System Administrator";
   neighborhood: string;
   status: "Active" | "Suspended";
   itemsCount: number;

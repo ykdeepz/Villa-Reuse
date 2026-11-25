@@ -2,95 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Community Member Sign In · Villa-Reuse</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/main.css" />
+  <meta http-equiv="refresh" content="0; url=login.html" />
+  <title>Sign In · Villa-Reuse</title>
+  <script>window.location.replace("login.html");</script>
 </head>
-<body data-page-role="member">
-  <header class="header">
-    <a class="header__brand" href="index.html">
-      <span class="header__logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-14 14z"/><path d="M5 19l7-7"/></svg>
-      </span>
-      <span>
-        <span class="header__title">Villa-Reuse</span>
-        <span class="header__tagline">GIVE WELL. LIVE LIGHTER.</span>
-      </span>
-    </a>
-  </header>
-
-  <div class="app">
-    <main class="content login-wrapper">
-      <div class="login-card">
-        <div class="login-card__head">
-          <span class="login-card__badge" style="background:var(--c-green-100); color:var(--c-green-900);">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
-            Target User Role 1
-          </span>
-          <h1 class="login-card__title">Community Member Sign In</h1>
-          <p class="login-card__subtitle">Browse nearby reusable listings, send donation requests, propose item exchanges, and earn ReUse Coins.</p>
-        </div>
-
-        <div class="role-info-banner">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1f7a3f" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-          <div>
-            <strong>Available Member Functions:</strong>
-            <ul class="role-functions">
-              <li>Browse pre-loved items with distance & condition tags</li>
-              <li>Filter by Category, Free Donation, and Exchange</li>
-              <li>Submit requests & exchange proposals with notes</li>
-              <li>Flag inappropriate listings for community moderators</li>
-            </ul>
-          </div>
-        </div>
-
-        <form id="login-form" novalidate>
-          <div id="login-alert" class="login-alert" role="alert"></div>
-
-          <div class="field">
-            <label class="field__label" for="login-email">Member Email <span class="req">*</span></label>
-            <input class="field__input" id="login-email" type="email" autocomplete="email" required value="member@villareuse.org" />
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="login-password">Password <span class="req">*</span></label>
-            <div class="password-input-group">
-              <input class="field__input" id="login-password" type="password" required value="villa2026" />
-              <button type="button" id="toggle-password" class="password-toggle" aria-label="Show password">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="form-row-options">
-            <label class="checkbox-label">
-              <input type="checkbox" checked />
-              <span>Remember me</span>
-            </label>
-            <span class="login-demo-note">Demo: Jordan Lee</span>
-          </div>
-
-          <button class="btn--submit-login" type="submit" id="submit-login-btn">
-            Sign In as Community Member
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </button>
-
-          <div class="login-other">
-            <p>Need a different portal?</p>
-            <div class="login-other__links">
-              <a href="login-donor.html">Item Donor Portal</a>
-              <a href="login-moderator.html">Moderator Portal</a>
-              <a href="login-admin.html">Administrator Access</a>
-            </div>
-          </div>
-        </form>
-      </div>
-    </main>
-  </div>
-
-  <script type="module" src="dist/login.js"></script>
+<body>
+  <p>Villa-Reuse now has one sign-in page for everyone. <a href="login.html">Continue to sign in</a>.</p>
 </body>
 </html>

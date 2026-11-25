@@ -1,6 +1,6 @@
 import { getActiveUser, ACTIVITY, initSession } from "./data/profileData.js";
 import {
-  initStore, getItems, getFavorites, toggleFavorite,
+  initStore, getItems, getRequests, getFavorites, toggleFavorite,
   updateOwnItem, deleteOwnItem,
 } from "./data/systemStore.js";
 import type { Item } from "./types.js";
@@ -35,6 +35,16 @@ async function bootstrap(): Promise<void> {
   mountLogout();
 
 
+  // ------------------------------------------------------ activity summary
+  // One small row with the signed-in user's own real numbers — this is
+  // where the unified account shows: posting AND requesting both count.
+  const summaryPosted = document.getElementById("summary-posted");
+  const summaryRequests = document.getElementById("summary-requests");
+  const summaryCoins = document.getElementById("summary-coins");
+  if (summaryPosted) summaryPosted.textContent = String(getItems().filter((i) => i.donorId === activeUser.id).length);
+  if (summaryRequests) summaryRequests.textContent = String(getRequests().filter((r) => r.requesterId === activeUser.id).length);
+  if (summaryCoins) summaryCoins.textContent = String(activeUser.coins);
+
   const list = requireElement<HTMLUListElement>("activity-list");
   list.append(...ACTIVITY.map(createActivityRow));
 
@@ -55,7 +65,10 @@ async function bootstrap(): Promise<void> {
     const mine = getItems().filter((i) => i.donorId === activeUser.id);
     listingsEl.replaceChildren();
     if (mine.length === 0) {
-      listingsEl.innerHTML = `<p class="my-empty">You haven't posted any items yet. Share something you no longer need — it takes a minute, and you earn ReUse Coins for it.</p>`;
+      listingsEl.innerHTML = `
+        <p class="my-empty">You haven't posted any items yet. Share something you no longer need — it takes a minute, and you earn ReUse Coins for it.</p>
+        <div class="empty-actions"><a class="btn btn--solid" href="donate.html">Post the first item</a></div>
+      `;
       return;
     }
     mine.forEach((item) => {

@@ -118,7 +118,7 @@ export async function createRequest(request: ItemRequest): Promise<void> {
 export async function updateRequestStatus(
   requestId: string,
   status: RequestStatus,
-  actorName = "Item Donor"
+  actorName = "Community Member"
 ): Promise<void> {
   void actorName; // the server records the signed-in user as the actor
   const data = await apiJson(`/api/requests/${requestId}`, "PATCH", { status });

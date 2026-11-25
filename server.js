@@ -76,6 +76,22 @@ function seedIfEmpty() {
 }
 seedIfEmpty();
 
+// One-time tidy-up for databases created before the account merge:
+// "Item Donor / Provider" accounts became unified Community Member
+// accounts (the same person now browses, requests, and posts items).
+(function unifyDonorAccounts() {
+  const rows = db.prepare("SELECT id, data FROM users").all();
+  const upd = db.prepare("UPDATE users SET data = ? WHERE id = ?");
+  for (const row of rows) {
+    const u = JSON.parse(row.data);
+    if (u.role === "Item Donor / Provider") {
+      u.role = "Community Member";
+      u.roleScope = "Post items, browse listings, request exchanges/donations, and manage your posts.";
+      upd.run(JSON.stringify(u), row.id);
+    }
+  }
+})();
+
 // ------------------------------------------------------------------ helpers
 const allRows = (table) => db.prepare(`SELECT data FROM ${table}`).all().map((r) => JSON.parse(r.data));
 const getRow = (table, id) => {
@@ -196,6 +212,53 @@ app.post("/api/auth/login", (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+// Sign-up: creates ONE unified community account. The same account can
+// browse and request items AND post/donate items (Marketplace model) —
+// there is no separate "donor" account type any more.
+app.post("/api/auth/register", (req, res) => {
+  const { name, email, password } = req.body || {};
+  const cleanName = String(name || "").trim();
+  const cleanEmail = String(email || "").trim().toLowerCase();
+  if (!cleanName) return res.status(400).json({ error: "Please enter your name." });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    return res.status(400).json({ error: "Please enter a valid email address." });
+  }
+  if (!password || String(password).length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters." });
+  }
+  const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(cleanEmail);
+  if (existing) return res.status(409).json({ error: "An account with that email already exists. Try signing in instead." });
+
+  const initials = cleanName.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  const year = new Date().getFullYear();
+  const user = {
+    id: `usr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    name: cleanName,
+    email: cleanEmail,
+    initials,
+    neighborhood: "Villa Community",
+    memberSince: year,
+    coins: 0,
+    itemsShared: 0,
+    wasteSavedKg: 0,
+    role: "Community Member",
+    roleScope: "Post items, browse listings, request exchanges/donations, and manage your posts.",
+    status: "Active",
+    itemsCount: 0,
+    joinedYear: year,
+  };
+  const salt = crypto.randomBytes(16).toString("hex");
+  db.prepare("INSERT INTO users (id, email, password_hash, password_salt, status, data) VALUES (?, ?, ?, ?, ?, ?)")
+    .run(user.id, user.email, hashPassword(String(password), salt), salt, user.status, JSON.stringify(user));
+  addAuditLog({ actor: user.name, role: user.role, action: "Account Created", details: `New community account signed up (${user.email})` });
+
+  const token = crypto.randomBytes(32).toString("hex");
+  db.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)")
+    .run(token, user.id, Date.now() + 1000 * 60 * 60 * 12);
+  res.cookie("vr_session", token, { httpOnly: true, sameSite: "lax", path: "/" });
+  res.status(201).json({ user: publicUser(user) });
+});
+
 app.post("/api/auth/logout", (req, res) => {
   const token = req.cookies.vr_session;
   if (token) db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
@@ -242,7 +305,7 @@ app.post("/api/items", requireAuth, upload.single("photo"), (req, res) => {
   profile.itemsCount = profile.itemsShared;
   row.data = JSON.stringify(profile);
   db.prepare("UPDATE users SET data = ? WHERE id = ?").run(row.data, row.id);
-  addAuditLog({ actor: item.donorName, role: "Item Donor / Provider", action: "New Item Posted", details: `Posted "${item.title}" under ${item.category} (${item.listingType})` });
+  addAuditLog({ actor: item.donorName, role: req.user.role, action: "New Item Posted", details: `Posted "${item.title}" under ${item.category} (${item.listingType})` });
   res.status(201).json({ item, user: publicUser(profile) });
 });
 
@@ -274,7 +337,7 @@ app.patch("/api/requests/:id", requireAuth, (req, res) => {
     else if (status === "Completed") item.status = "Completed";
     putRow("items", item);
   }
-  addAuditLog({ actor: req.user.name, role: "Item Donor / Provider", action: `Request ${status}`, details: `Request for "${request.itemTitle}" marked as ${status}` });
+  addAuditLog({ actor: req.user.name, role: req.user.role, action: `Request ${status}`, details: `Request for "${request.itemTitle}" marked as ${status}` });
   const verb = status === "Accepted" ? "accepted" : status === "Rejected" ? "declined" : "completed";
   notify(request.requesterId, `request_${verb}`, `Your request for "${request.itemTitle}" was ${verb}.`);
   res.json({ request });

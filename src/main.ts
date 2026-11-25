@@ -7,6 +7,7 @@ import { filterItems, renderItemGrid } from "./components/itemGrid.js";
 import { openItemModal } from "./components/itemModal.js";
 import { syncNavigation } from "./components/navigation.js";
 import { mountLogout } from "./components/auth.js";
+import { getMode } from "./components/modeSwitch.js";
 import type { CategoryFilter, Item } from "./types.js";
 
 function requireElement<T extends HTMLElement>(id: string): T {
@@ -18,7 +19,7 @@ function requireElement<T extends HTMLElement>(id: string): T {
 async function bootstrap(): Promise<void> {
   await initSession();
   await initStore();
-  syncNavigation();
+  const activeUser = syncNavigation();
   mountLogout();
   const grid = requireElement<HTMLElement>("item-grid");
   const counter = requireElement<HTMLElement>("item-count");
@@ -32,9 +33,44 @@ async function bootstrap(): Promise<void> {
   let currentType: any = "All";
   let currentCondition: any = "All";
 
+  // Arriving from the top-bar search on another page: index.html?q=…
+  const urlQuery = new URLSearchParams(window.location.search).get("q");
+  if (urlQuery) {
+    currentQuery = urlQuery;
+    search.value = urlQuery;
+  }
+
+  // Browsing / Posting mode (sidebar switch, kept in localStorage).
+  // Browsing shows the whole community feed; Posting turns the feed into
+  // "your listings" so the same account can manage what it posted.
+  const feedTitle = document.querySelector<HTMLElement>(".section-head__title");
+  const feedSubtitle = document.querySelector<HTMLElement>(".section-head__subtitle");
+  const feedEyebrow = document.querySelector<HTMLElement>(".discover .eyebrow");
+
+  function applyModeChrome(): void {
+    const posting = getMode() === "posting";
+    if (feedTitle) feedTitle.textContent = posting ? "Your listings" : "Discover something useful";
+    if (feedSubtitle) {
+      feedSubtitle.textContent = posting
+        ? "Items you posted for the community — tap one to review it."
+        : "Pre-loved items, ready for their next chapter.";
+    }
+    if (feedEyebrow) feedEyebrow.textContent = posting ? "POSTED BY YOU" : "AVAILABLE NEAR YOU";
+    const heroBtn = document.getElementById("donate-btn");
+    if (heroBtn) {
+      heroBtn.innerHTML = posting
+        ? `<span class="btn__plus">+</span> Post another item`
+        : `<span class="btn__plus">+</span> Donate an item`;
+    }
+  }
+
   function render(): void {
+    applyModeChrome();
     const allItems = refreshItems();
-    const filtered = filterItems(allItems, {
+    const visible = getMode() === "posting"
+      ? allItems.filter((i) => i.donorId === activeUser.id)
+      : allItems;
+    const filtered = filterItems(visible, {
       category: currentCategory,
       query: currentQuery,
       listingType: currentType,
@@ -45,8 +81,21 @@ async function bootstrap(): Promise<void> {
       openItemModal(item, () => {
         render();
       });
+    }, () => {
+      // "Clear filters" from the friendly empty state
+      currentCategory = "All";
+      currentQuery = "";
+      currentType = "All";
+      currentCondition = "All";
+      search.value = "";
+      typeFilter.value = "All";
+      conditionFilter.value = "All";
+      setActiveChip("All");
+      render();
     });
   }
+
+  window.addEventListener("vr-mode-change", () => render());
 
   const setActiveChip = mountFilterChips(chips, (cat) => {
     currentCategory = cat;

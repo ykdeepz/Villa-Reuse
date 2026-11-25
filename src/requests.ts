@@ -29,14 +29,11 @@ async function bootstrap(): Promise<void> {
   function render(): void {
     const allRequests = getRequests();
 
-    // In demo, if activeUser is donor or admin, show all incoming; otherwise show requests for their items or all for easy testing
-    const incoming = allRequests.filter(
-      (r) => r.donorName === activeUser.name || activeUser.role === "Item Donor / Provider" || activeUser.role === "System Administrator"
-    );
-
-    const sent = allRequests.filter(
-      (r) => r.requesterName === activeUser.name || activeUser.role === "Community Member"
-    );
+    // Unified accounts: "incoming" = requests for items I posted,
+    // "sent" = requests I made. Staff roles see all incoming for oversight.
+    const isStaff = activeUser.role === "Community Moderator" || activeUser.role === "System Administrator";
+    const incoming = allRequests.filter((r) => r.donorId === activeUser.id || isStaff);
+    const sent = allRequests.filter((r) => r.requesterId === activeUser.id);
 
     countIncoming.textContent = String(incoming.length);
     countSent.textContent = String(sent.length);
@@ -49,10 +46,15 @@ async function bootstrap(): Promise<void> {
       const empty = document.createElement("div");
       empty.className = "grid__empty-container";
       empty.innerHTML = `
-        <p class="grid__empty">No ${currentTab === "incoming" ? "incoming requests received" : "sent requests on record"}.</p>
+        <p class="grid__empty">No ${currentTab === "incoming" ? "incoming requests yet" : "requests sent yet"} — nothing to feel bad about, it just means a quiet day in the neighborhood.</p>
         <small style="color:var(--c-muted); display:block; margin-top:6px;">
-          ${currentTab === "incoming" ? "Post more items to receive donation claims or exchange proposals." : "Browse available items on the Home page and submit a request!"}
+          ${currentTab === "incoming" ? "Post an item and neighbors can send you donation claims or exchange proposals." : "Find something useful on the Home page and send your first request."}
         </small>
+        <div class="empty-actions">
+          ${currentTab === "incoming"
+            ? `<a class="btn btn--solid" href="donate.html">Post an item</a>`
+            : `<a class="btn btn--solid" href="index.html">Browse items</a>`}
+        </div>
       `;
       listContainer.append(empty);
       return;

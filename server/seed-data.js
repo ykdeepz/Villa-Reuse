@@ -22,8 +22,8 @@ const USERS = [
     id: "usr_donor", name: "Maria Santos", email: "donor@villareuse.org",
     initials: "MS", neighborhood: "Villa Verde East", memberSince: 2022,
     coins: 340, itemsShared: 24, wasteSavedKg: 285,
-    role: "Item Donor / Provider",
-    roleScope: "Provide items for donation or exchange and update item availability.",
+    role: "Community Member",
+    roleScope: "Post items, browse listings, request exchanges/donations, and manage your posts.",
     status: "Active", itemsCount: 24, joinedYear: 2022,
   },
   {
@@ -67,7 +67,7 @@ const REPORTS = [
 const LOGS = [
   { id: "log_1", timestamp: "2026-11-24 16:15", actor: "Jordan Lee", role: "Community Member", action: "Exchange Request Submitted", details: "Submitted exchange proposal for item #item_2 (Electric Kettle)" },
   { id: "log_2", timestamp: "2026-11-24 13:20", actor: "Carlos Diaz", role: "Community Member", action: "Listing Reported", details: "Reported #item_6 (Wooden Study Desk Chair) for safety verification" },
-  { id: "log_3", timestamp: "2026-11-23 14:00", actor: "Maria Santos", role: "Item Donor / Provider", action: "Request Accepted", details: "Accepted request #req_2 from Elena Rostova for #item_4" },
+  { id: "log_3", timestamp: "2026-11-23 14:00", actor: "Maria Santos", role: "Community Member", action: "Request Accepted", details: "Accepted request #req_2 from Elena Rostova for #item_4" },
   { id: "log_4", timestamp: "2026-11-22 10:15", actor: "Alex Chen", role: "Community Moderator", action: "Report Reviewed & Dismissed", details: "Dismissed report #rep_2 on #item_1 after donor confirmed sizing tag" },
   { id: "log_5", timestamp: "2026-11-20 09:30", actor: "Samira Patel", role: "System Administrator", action: "System Audit Maintenance", details: "Verified waste diversion metrics and community ReUse Coin ledger" },
 ];

@@ -70,21 +70,40 @@ All four accounts use the same password: **`villa2026`**
 | Role | Email | Starts on | Can do |
 |------|-------|-----------|--------|
 | Community Member | `member@villareuse.org` | Home | Browse, post items, request donations/exchanges |
-| Item Donor / Provider | `donor@villareuse.org` | Requests | Post items, accept / decline / complete requests |
+| Community Member | `donor@villareuse.org` | Home | The same unified account — this login used to be the separate "Item Donor" account; its posted items and history are unchanged |
 | Community Moderator | `moderator@villareuse.org` | Moderation | Review reports, dismiss them, remove listings, warn providers |
 | System Administrator | `admin@villareuse.org` | Admin | View system stats and audit logs, suspend / reactivate users |
 
-Each role has its own sign-in page (`login-member.html`, `login-donor.html`,
-`login-moderator.html`, `login-admin.html`), reachable from `login.html`.
-Admin and Moderation pages — and their API routes — are restricted:
-other roles get an access gate in the browser and a `403` from the server.
+**One account does everything.** There is no separate member/donor
+account any more: like Facebook Marketplace, the same person browses and
+requests items *and* posts/donates their own. Signing in happens on one
+page (`login.html`) with **Sign in** and **Create account** — anyone can
+register a new unified account there. The old per-role pages
+(`login-member.html`, `login-donor.html`) now simply redirect to
+`login.html`. Moderators and Admins keep their own sign-in pages
+(`login-moderator.html`, `login-admin.html`), linked discreetly at the
+bottom of `login.html` as "Staff sign in". Admin and Moderation pages —
+and their API routes — stay restricted: other roles get an access gate
+in the browser and a `403` from the server. Logging out returns to
+`login.html`.
+
+**Browsing / Posting switch.** Signed-in community accounts get a small
+"I am: Browsing / Posting" switch at the top of the sidebar. *Browsing*
+shows the community feed on Home; *Posting* goes to the Post Item page,
+and Home then shows **Your listings** instead of the whole feed. The
+choice is remembered (localStorage) across pages and reloads.
 
 ---
 
 ## Features
 
 - **Discover** — browse items with search, category chips, and
-  listing-type / condition filters
+  listing-type / condition filters. The search box in the top bar works
+  from every page: on Home it drives the feed's filter directly, and
+  from anywhere else it jumps to Home with your search applied
+- **One unified account + mode switch** — sign up once, then flip the
+  sidebar's Browsing / Posting switch depending on whether you are
+  looking for items or sharing them
 - **Post an item** — donation or exchange, with a real photo upload
   (JPG/PNG, stored on the server) and a ReUse Coin estimate; posting
   credits the poster's coin balance
@@ -107,7 +126,14 @@ other roles get an access gate in the browser and a `403` from the server.
 - **My listings & favorites (Profile)** — edit or delete your own
   listings (the server refuses edits to anyone else's — 403), cancel
   your own pending requests from the Requests page, and save items
-  with the heart button on Home to find them again under Favorites
+  with the heart button on Home to find them again under Favorites.
+  The Profile page also opens with a small "Your activity at a glance"
+  summary — items posted, requests made, and your ReUse Coin balance,
+  all counted from the real data
+- **Friendly empty states** — when a list is empty (no feed matches,
+  no requests yet, no listings yet) the page says so in plain words
+  and offers the next step as a button, e.g. "Post the first item" or
+  "Browse items"
 - **Friendly feedback** — actions confirm with in-app toasts and a
   styled dialog instead of browser `alert()` / `confirm()` popups,
   and empty lists explain what to do next
@@ -149,6 +175,7 @@ and coin balances are shared by every browser and survive restarts.
 
 | Method | Endpoint | Who | Purpose |
 |--------|----------|-----|---------|
+| POST | `/api/auth/register` | anyone | Create a unified community account; signs you in (409 if the email is taken) |
 | POST | `/api/auth/login` | anyone | Sign in; sets the httpOnly session cookie |
 | POST | `/api/auth/logout` | signed in | End the session |
 | GET | `/api/me` | signed in | Current user's profile |

@@ -1,0 +1,50 @@
+/* Browsing / Posting mode switch (sidebar, unified accounts) */
+.mode-switch {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+}
+
+.mode-switch__label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-bottom: 8px;
+}
+
+.mode-switch__options {
+  display: flex;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  gap: 3px;
+}
+
+.mode-switch__btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 7px 4px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-switch__btn:hover { color: var(--c-text); }
+
+.mode-switch__btn--active {
+  background: var(--c-green-600);
+  color: #fff;
+}
+
+.mode-switch__btn--active:hover { color: #fff; }

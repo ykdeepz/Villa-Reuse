@@ -7,6 +7,13 @@
 //
 //   * Browsing → the Home feed of community items.
 //   * Posting  → the Post Item page (and, on Home, your own listings).
+//
+// The mode is also mirrored onto <html data-mode="…"> so the whole
+// signed-in interface can follow the mode's colour (see
+// css/components/mode-theme.css): green for Browsing, gold for
+// Posting. This module only runs for community accounts, so staff
+// pages and the sign-in pages never get the attribute and keep the
+// standard green theme.
 
 export type BrowseMode = "browsing" | "posting";
 
@@ -28,7 +35,12 @@ export function setMode(mode: BrowseMode): void {
   }
 }
 
+function reflectMode(mode: BrowseMode): void {
+  document.documentElement.dataset.mode = mode;
+}
+
 export function mountModeSwitch(): void {
+  reflectMode(getMode());
   const nav = document.querySelector<HTMLElement>(".sidebar__nav");
   if (!nav || nav.querySelector(".mode-switch")) return;
 
@@ -46,6 +58,7 @@ export function mountModeSwitch(): void {
 
   const sync = (): void => {
     const current = getMode();
+    reflectMode(current);
     wrap.querySelectorAll<HTMLButtonElement>(".mode-switch__btn").forEach((btn) => {
       const active = btn.dataset.mode === current;
       btn.classList.toggle("mode-switch__btn--active", active);

@@ -49,4 +49,7 @@
 @import "components/listings.css";
 @import "layout/responsive.css";
 
+/* /posting mode theme (gold throughout for community accounts) */
+@import "components/mode-theme.css";
+
 

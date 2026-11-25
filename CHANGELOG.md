@@ -383,6 +383,36 @@ page).
   looking at the community's items, gold means you are looking
   at your own postings.
 
+### Posting gold throughout (improved, Round 3)
+- **What changed:** The colour code now covers the whole
+  signed-in interface, not just the switch. In Posting mode the
+  logo tile, notification badge, buttons, filter chips, links,
+  sidebar icons and current-page highlight, the hero panel and
+  its stats column, form focus rings, the photo dropzone, the
+  Impact stat cards and the profile accents all turn gold;
+  Browsing keeps the theme green everywhere. The mode switch
+  stamps the current mode on the page itself
+  (`<html data-mode="…">`), and a new stylesheet
+  (`css/components/mode-theme.css`) re-points the palette's
+  accent colours at the gold end of the same palette — the
+  accent green becomes the theme gold, the light green tint
+  becomes the theme cream, and the dark green becomes the
+  palette's near-black text colour so headings and the dark
+  panels stay readable behind their gold accents. Where a gold
+  fill carries text, it takes the dark text colour, the same
+  pairing the switch's gold pill already used. Still no new
+  colours: every value comes from the existing palette. Staff
+  pages and the sign-in pages have no mode switch, so they never
+  get the stamp and are unchanged. The one thing that keeps its
+  own colours in both modes is the item status system —
+  Available, Requested, Reserved, Completed — because those
+  badges are a code of their own (Requested is already gold, so
+  turning Available gold too would make two statuses look the
+  same).
+- **Why:** Colouring only the switch left the rest of the page
+  green, so Posting mode did not feel different at a glance —
+  the mode colour has to be the page's colour, not one button's.
+
 ### Search in the top bar (added, Round 3)
 - **What was added:** A search field in the signed-in top bar. On
   Home it is wired to the feed's existing search filter (typing in

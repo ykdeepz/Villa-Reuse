@@ -1,0 +1,153 @@
+/* Posting mode theme — the whole signed-in interface turns gold.
+ *
+ * The mode switch (src/components/modeSwitch.ts) mirrors the current
+ * mode onto <html data-mode="…">, and it only runs for community
+ * accounts — staff pages and the sign-in pages never get the
+ * attribute, so they always keep the standard green theme. Browsing
+ * needs no overrides at all: it is the palette as designed.
+ *
+ * Instead of recolouring rule by rule, the posting block below
+ * re-points the palette's accent variables at the gold end of the
+ * same palette, so every button, icon, link, badge, focus ring and
+ * tint that was green follows at once:
+ *
+ *   --c-green-600 / --c-green-700  the accent itself      → gold
+ *   --c-lime                       accent on dark panels → gold
+ *   --c-green-100                  light accent tint     → cream
+ *   --c-green-900                  dark accent ink/panel → the
+ *                                  palette's near-black text colour,
+ *                                  so headings stay readable and the
+ *                                  dark panels stay dark behind
+ *                                  their new gold accents.
+ *
+ * No new colours are introduced; every value below already exists
+ * in css/base/variables.css (the rgba() rings are the same gold and
+ * text colours at low opacity, the way the green rings were). */
+
+:root[data-mode="posting"] {
+  --c-green-600: var(--c-gold);
+  --c-green-700: var(--c-gold);
+  --c-green-100: var(--c-cream);
+  --c-green-900: var(--c-text);
+  --c-lime: var(--c-gold);
+}
+
+/* Gold fills pair with dark text — the same pairing the switch's
+   gold Posting pill already uses (white on this gold is ~3.6:1,
+   the dark text colour is ~4.5:1). */
+:root[data-mode="posting"] .chip--active,
+:root[data-mode="posting"] .btn--solid,
+:root[data-mode="posting"] .icon-btn__badge {
+  color: var(--c-text);
+}
+
+:root[data-mode="posting"] .btn--solid:hover {
+  background: var(--c-text);
+  color: #fff;
+}
+
+:root[data-mode="posting"] .header__logo svg {
+  stroke: var(--c-text);
+}
+
+/* Focus rings keep a soft tint of the current accent. */
+:root[data-mode="posting"] .header__search:focus-within,
+:root[data-mode="posting"] .search:focus-within {
+  box-shadow: 0 0 0 3px rgba(176, 125, 30, 0.18);
+}
+
+:root[data-mode="posting"] .field__input:focus {
+  box-shadow: 0 0 0 3px rgba(176, 125, 30, 0.15);
+}
+
+:root[data-mode="posting"] .chip--active {
+  box-shadow: 0 0 0 3px rgba(176, 125, 30, 0.25);
+}
+
+/* Panels that sit on the accent colour itself: in posting mode the
+   hero's stats column and the primary stat card are gold, so their
+   contents switch to the dark pairing as well. */
+:root[data-mode="posting"] .hero__stats {
+  color: var(--c-text);
+}
+
+:root[data-mode="posting"] .hero__stats .progress {
+  background: rgba(20, 35, 26, 0.18);
+}
+
+:root[data-mode="posting"] .hero__stats .progress__bar {
+  background: var(--c-text);
+}
+
+:root[data-mode="posting"] .stat-card--primary {
+  color: var(--c-text);
+}
+
+:root[data-mode="posting"] .stat-card--primary .stat-card__label,
+:root[data-mode="posting"] .stat-card--primary .stat-card__note {
+  color: var(--c-text);
+}
+
+:root[data-mode="posting"] .stat-card--primary .stat-card__track {
+  background: rgba(20, 35, 26, 0.18);
+}
+
+:root[data-mode="posting"] .stat-card--primary .stat-card__fill {
+  background: var(--c-text);
+}
+
+/* Progress track on the plain stat cards (the fill already follows
+   the accent variable). */
+:root[data-mode="posting"] .stat-card__track {
+  background: rgba(176, 125, 30, 0.25);
+}
+
+/* Leaf and tree icons are inline SVGs with the green written into
+   the markup; restamp them with the accent colour. On the gold
+   primary stat card the trees take the dark pairing instead. */
+:root[data-mode="posting"] .sidebar-card__icon,
+:root[data-mode="posting"] .coin-suggestion__icon svg,
+:root[data-mode="posting"] .insight-banner__icon svg,
+:root[data-mode="posting"] .trees-row svg {
+  stroke: var(--c-gold);
+}
+
+:root[data-mode="posting"] .stat-card--primary .trees-row svg {
+  stroke: var(--c-text);
+}
+
+/* Light tints that were written as fixed colours rather than the
+   tint variable get their warm equivalent. */
+:root[data-mode="posting"] .upload-zone:hover,
+:root[data-mode="posting"] .notif-item--unread,
+:root[data-mode="posting"] .contributor--self,
+:root[data-mode="posting"] .header-logout:hover,
+:root[data-mode="posting"] .activity-row:hover {
+  background: var(--c-cream);
+}
+
+/* The upload dropzone's resting state has its own pale tint and
+   dashed border written in fixed colours; both follow the mode. */
+:root[data-mode="posting"] .upload-zone {
+  background: var(--c-cream);
+  border-color: var(--c-gold);
+}
+
+:root[data-mode="posting"] .profile-card__avatar {
+  box-shadow: 0 0 0 8px var(--c-cream);
+}
+
+:root[data-mode="posting"] .insight-banner__text {
+  color: var(--c-cream);
+}
+
+/* The current page in the sidebar gets the mode's tint, with a gold
+   icon; the label keeps the regular text colour so it stays easy
+   to read on the light tint. */
+:root[data-mode="posting"] .sidebar__link--active {
+  background: var(--c-cream);
+}
+
+:root[data-mode="posting"] .sidebar__link--active svg {
+  color: var(--c-gold);
+}

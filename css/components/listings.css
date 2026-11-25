@@ -1,0 +1,74 @@
+/* Favorites heart on item cards + Profile "My listings / My favorites". */
+
+.card__fav {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--c-border);
+  background: rgba(255, 255, 255, 0.92);
+  color: #7a4a56;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.15s, color 0.15s;
+  z-index: 2;
+}
+.card__fav:hover { transform: scale(1.08); }
+.card__fav--active { background: #b3372a; border-color: #b3372a; color: #fff; }
+.card__fav--active svg { fill: currentColor; }
+
+.my-section { margin-top: 26px; }
+.my-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.my-section__post { padding: 9px 16px; font-size: 13px; }
+.my-section__hint { margin-top: 8px; font-size: 12.5px; color: var(--c-muted); }
+
+.my-listings { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+
+.my-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-bg);
+}
+.my-item__thumb {
+  width: 64px; height: 64px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.my-item__main { flex: 1; min-width: 0; }
+.my-item__title { font-size: 15px; font-weight: 700; }
+.my-item__meta { font-size: 12px; color: var(--c-muted); margin-top: 3px; }
+.my-item__desc {
+  font-size: 12.5px; color: var(--c-muted); margin-top: 4px; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.my-item__actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.my-empty {
+  padding: 22px 16px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--c-muted);
+  border: 1px dashed var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-surface);
+}
+
+@media (max-width: 560px) {
+  .my-item { flex-wrap: wrap; }
+  .my-item__actions { width: 100%; }
+}

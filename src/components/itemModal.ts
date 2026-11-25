@@ -1,6 +1,7 @@
 import type { Item, ItemRequest, ListingReport } from "../types.js";
 import { createRequest, submitReport } from "../data/systemStore.js";
 import { getActiveUser } from "../data/profileData.js";
+import { showToast } from "./feedback.js";
 
 function escapeHtml(value: string): string {
   const div = document.createElement("div");
@@ -160,14 +161,14 @@ export function openItemModal(item: Item, onUpdate?: () => void): void {
   // Handle Request Submission
   const requestForm = modalOverlay.querySelector<HTMLFormElement>("#item-request-form");
   if (requestForm) {
-    requestForm.addEventListener("submit", (e) => {
+    requestForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const offerInput = modalOverlay?.querySelector<HTMLInputElement>("#exchange-offer");
       const noteInput = modalOverlay?.querySelector<HTMLTextAreaElement>("#request-note");
       const pickupInput = modalOverlay?.querySelector<HTMLInputElement>("#request-pickup");
 
       if (isExchange && offerInput && !offerInput.value.trim()) {
-        alert("Please describe what item you offer in exchange.");
+        showToast("Please describe what item you offer in exchange.", "error");
         offerInput.focus();
         return;
       }
@@ -188,8 +189,8 @@ export function openItemModal(item: Item, onUpdate?: () => void): void {
         createdAt: "Just now",
       };
 
-      createRequest(newReq);
-      alert(`Success! Your ${newReq.type.toLowerCase()} has been sent to ${item.donorName}. Track its status in Request Management.`);
+      await createRequest(newReq);
+      showToast(`Your ${newReq.type.toLowerCase()} has been sent to ${item.donorName}. Track its status in Request Management.`);
       closeModal();
       if (onUpdate) onUpdate();
     });
@@ -198,7 +199,7 @@ export function openItemModal(item: Item, onUpdate?: () => void): void {
   // Handle Report Submission
   const reportForm = modalOverlay.querySelector<HTMLFormElement>("#report-form");
   if (reportForm) {
-    reportForm.addEventListener("submit", (e) => {
+    reportForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const reasonSelect = modalOverlay?.querySelector<HTMLSelectElement>("#report-reason");
       const detailsInput = modalOverlay?.querySelector<HTMLTextAreaElement>("#report-details");
@@ -214,8 +215,8 @@ export function openItemModal(item: Item, onUpdate?: () => void): void {
         createdAt: "Just now",
       };
 
-      submitReport(newReport);
-      alert(`Thank you, ${activeUser.name}. Your report on "${item.title}" has been submitted to the Community Moderator queue.`);
+      await submitReport(newReport);
+      showToast(`Thank you, ${activeUser.name}. Your report on "${item.title}" has been submitted to the Community Moderator queue.`);
       closeModal();
     });
   }

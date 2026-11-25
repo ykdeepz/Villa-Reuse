@@ -1,0 +1,59 @@
+/* Responsive polish — imported last so it can refine the earlier rules.
+   Desktop appearance is unchanged; these rules only apply at tablet /
+   phone widths so the sidebar, header, grids and tables stay usable. */
+
+@media (max-width: 768px) {
+  /* Sidebar becomes a horizontal, scrollable nav bar under the header */
+  .sidebar {
+    padding: 12px 14px;
+    height: auto;
+  }
+  .sidebar__nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar__link {
+    white-space: nowrap;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .content { padding: 0 16px 44px; max-width: 100%; }
+  .page-shell-wide { padding: 20px 16px 44px; max-width: 100%; }
+  .request-card__main { min-width: 0; }
+  .request-card__note, .request-card__pickup, .request-card__proposal { overflow-wrap: anywhere; }
+
+  /* Tables scroll sideways inside their wrapper instead of breaking layout */
+  .data-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table { min-width: 600px; }
+
+  .request-card { flex-direction: column; align-items: flex-start; }
+  .request-card__actions { width: 100%; }
+
+  .header__actions { gap: 8px; }
+  .header-logout { padding: 7px 10px; }
+}
+
+@media (max-width: 420px) {
+  .header { padding: 0 10px; }
+  .header__tagline { display: none; }
+  .header__title { font-size: 16px; }
+  .coins { padding: 6px 10px; }
+  .coins__value { font-size: 12px; }
+  .avatar { width: 32px; height: 32px; }
+  .icon-btn { width: 34px; height: 34px; }
+
+  .hero__title, .page-title { font-size: 28px; }
+  .impact-title, .profile-title { font-size: 30px; }
+
+  .toast-stack { right: 12px; bottom: 12px; }
+  .confirm-dialog__actions { flex-direction: column-reverse; }
+  .confirm-dialog__actions .btn { width: 100%; justify-content: center; }
+
+  .tabs-nav { overflow-x: auto; }
+  .tab-btn { white-space: nowrap; padding: 10px 12px; }
+}

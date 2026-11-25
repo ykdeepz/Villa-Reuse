@@ -24,8 +24,12 @@ export interface Profile {
   wasteSavedKg: number;
   role: UserRole;
   roleScope: string;
+  status?: "Active" | "Suspended";
 }
 
+// Demo account profiles, used ONLY to pre-fill the per-role login pages
+// (email + name). Passwords are never kept in the browser any more —
+// login is checked by the server (POST /api/auth/login).
 export const DEMO_USERS: Record<string, Profile> = {
   member: {
     id: "usr_member",
@@ -83,34 +87,62 @@ export const DEMO_USERS: Record<string, Profile> = {
 
 export const PROFILE: Profile = DEMO_USERS.member;
 
-export const STORAGE_KEY = "villa_reuse_active_user";
+// The signed-in user is kept in memory for this page only. The real session
+// lives on the server in an httpOnly cookie, so it survives page loads and
+// restarts and cannot be forged from the browser console.
+let cachedUser: Profile | null = null;
 
 export function getActiveUser(): Profile {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw) as Profile;
-    }
-  } catch (err) {
-    console.warn("Failed to load user from localStorage", err);
-  }
-  return PROFILE;
+  return cachedUser ?? PROFILE;
 }
 
 export function setActiveUser(user: Profile): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  } catch (err) {
-    console.warn("Failed to save user to localStorage", err);
-  }
+  cachedUser = user;
 }
 
-export function logoutUser(): void {
+/** Ask the server who is signed in (GET /api/me). Redirects to the login
+ *  page when there is no valid session. Call once at page start. */
+export async function initSession(redirectOnFail = true): Promise<Profile | null> {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    const res = await fetch("/api/me");
+    if (res.ok) {
+      const data = (await res.json()) as { user: Profile };
+      cachedUser = data.user;
+      return cachedUser;
+    }
   } catch (err) {
-    console.warn("Failed to remove user from localStorage", err);
+    console.warn("Failed to reach the server for session check", err);
   }
+  cachedUser = null;
+  if (redirectOnFail && !window.location.pathname.endsWith("login.html") && !window.location.pathname.includes("login-")) {
+    window.location.href = "login.html";
+  }
+  return null;
+}
+
+/** Sign in against the server. Returns the profile, or throws with the
+ *  server's error message (wrong password, unknown email, suspended…). */
+export async function loginUser(email: string, password: string): Promise<Profile> {
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = (await res.json().catch(() => ({}))) as { user?: Profile; error?: string };
+  if (!res.ok || !data.user) {
+    throw new Error(data.error || "Sign-in failed. Please try again.");
+  }
+  cachedUser = data.user;
+  return data.user;
+}
+
+export async function logoutUser(): Promise<void> {
+  try {
+    await fetch("/api/auth/logout", { method: "POST" });
+  } catch (err) {
+    console.warn("Failed to tell the server about logout", err);
+  }
+  cachedUser = null;
 }
 
 export const ACTIVITY: ActivityEntry[] = [

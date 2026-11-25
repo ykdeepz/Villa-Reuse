@@ -1,0 +1,73 @@
+/* Toasts + styled confirm dialog — replaces alert()/confirm() popups. */
+
+.toast-stack {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+}
+
+.toast {
+  padding: 13px 16px;
+  background: var(--c-green-900);
+  color: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 28px rgba(20, 35, 26, 0.28);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  animation: toastIn 0.22s ease-out;
+}
+
+.toast--error { background: #8c2b1d; }
+.toast--info { background: #37473d; }
+.toast--out { opacity: 0; transform: translateY(6px); transition: opacity 0.4s, transform 0.4s; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.confirm-dialog { max-width: 430px; }
+.confirm-overlay { z-index: 200; }
+
+.confirm-dialog__body { padding: 28px 28px 24px; }
+
+.confirm-dialog__title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.confirm-dialog__message {
+  margin-top: 10px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--c-muted);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.btn--danger-solid { background: #b3372a; color: #fff; padding: 13px 22px; }
+.btn--danger-solid:hover { background: #97301f; }
+
+/* Edit-listing dialog on the Profile page */
+.edit-dialog { max-width: 480px; }
+.edit-form { padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+.edit-form__title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.edit-form .confirm-dialog__actions { margin-top: 6px; }

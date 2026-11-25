@@ -1,8 +1,13 @@
 import type { Profile } from "../data/profileData.js";
 import { getActiveUser } from "../data/profileData.js";
+import { mountNotifications } from "./notifications.js";
 
 export function syncNavigation(user?: Profile): Profile {
   const activeUser = user || getActiveUser();
+
+  // Real notification badge + dropdown on the header bell (no-op on
+  // pages without a bell, and when nobody is signed in).
+  mountNotifications();
 
   // 1. Sync Header Avatar & Balance
   const avatarEl = document.querySelector<HTMLElement>(".header .avatar");

@@ -1,5 +1,7 @@
 import type { FilterState, Item } from "../types.js";
 import { createItemCard } from "./itemCard.js";
+import { toggleFavorite } from "../data/systemStore.js";
+import { showToast } from "./feedback.js";
 
 export function filterItems(items: Item[], { category, query, listingType, condition }: Partial<FilterState> & { category: string; query: string }): Item[] {
   const q = query.trim().toLowerCase();
@@ -43,6 +45,20 @@ export function renderItemGrid(
       const btn = card.querySelector<HTMLButtonElement>('[data-action="view-item"]');
       if (btn && onViewItem) {
         btn.addEventListener("click", () => onViewItem(item));
+      }
+      const favBtn = card.querySelector<HTMLButtonElement>('[data-action="fav-item"]');
+      if (favBtn) {
+        favBtn.addEventListener("click", async () => {
+          try {
+            const favorites = await toggleFavorite(item.id);
+            const saved = favorites.includes(item.id);
+            favBtn.classList.toggle("card__fav--active", saved);
+            favBtn.setAttribute("aria-pressed", String(saved));
+            showToast(saved ? `"${item.title}" saved to your favorites.` : `"${item.title}" removed from favorites.`, "info");
+          } catch {
+            showToast("Could not update favorites. Please try again.", "error");
+          }
+        });
       }
       grid.append(card);
     });

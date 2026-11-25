@@ -1,6 +1,8 @@
-import { getReports, resolveReport, addAuditLog } from "./data/systemStore.js";
+import { getReports, resolveReport, addAuditLog, initStore } from "./data/systemStore.js";
+import { initSession } from "./data/profileData.js";
 import { syncNavigation } from "./components/navigation.js";
 import { mountLogout } from "./components/auth.js";
+import { showToast, confirmAction } from "./components/feedback.js";
 
 function escapeHtml(value: string): string {
   const div = document.createElement("div");
@@ -8,7 +10,9 @@ function escapeHtml(value: string): string {
   return div.innerHTML;
 }
 
-function bootstrap(): void {
+async function bootstrap(): Promise<void> {
+  await initSession();
+  await initStore();
   const activeUser = syncNavigation();
   mountLogout();
 
@@ -113,32 +117,32 @@ function bootstrap(): void {
       const warnBtn = tr.querySelector<HTMLButtonElement>('[data-action="warn"]');
 
       if (dismissBtn) {
-        dismissBtn.addEventListener("click", () => {
-          resolveReport(rep.id, "Dismissed", activeUser.name);
-          alert(`Report on "${rep.itemTitle}" has been dismissed. Listing remains active.`);
+        dismissBtn.addEventListener("click", async () => {
+          await resolveReport(rep.id, "Dismissed", activeUser.name);
+          showToast(`Report on "${rep.itemTitle}" dismissed. The listing remains active.`, "info");
           render();
         });
       }
 
       if (removeBtn) {
-        removeBtn.addEventListener("click", () => {
-          if (confirm(`Remove listing "${rep.itemTitle}" from community discover feed?`)) {
-            resolveReport(rep.id, "Listing Removed", activeUser.name);
-            alert(`Listing "${rep.itemTitle}" removed and hidden from community search.`);
+        removeBtn.addEventListener("click", async () => {
+          if (await confirmAction({ title: "Remove this listing?", message: `Remove "${rep.itemTitle}" from the community discover feed? Members will no longer see it.`, confirmLabel: "Remove listing", danger: true })) {
+            await resolveReport(rep.id, "Listing Removed", activeUser.name);
+            showToast(`Listing "${rep.itemTitle}" removed and hidden from community search.`);
             render();
           }
         });
       }
 
       if (warnBtn) {
-        warnBtn.addEventListener("click", () => {
-          alert(`A formal reminder about listing guidelines has been logged for the item provider.`);
-          addAuditLog({
+        warnBtn.addEventListener("click", async () => {
+          await addAuditLog({
             actor: activeUser.name,
             role: "Community Moderator",
             action: "Provider Warning Issued",
             details: `Issued warning for listing #${rep.itemId} based on report: ${rep.reason}`,
           });
+          showToast("A formal reminder about listing guidelines has been logged for the item provider.", "info");
         });
       }
 
@@ -149,4 +153,4 @@ function bootstrap(): void {
   render();
 }
 
-bootstrap();
+void bootstrap();

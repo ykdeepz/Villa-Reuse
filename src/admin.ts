@@ -1,6 +1,8 @@
-import { getUsers, getItems, getRequests, getAuditLogs, toggleUserStatus } from "./data/systemStore.js";
+import { getUsers, getItems, getRequests, getAuditLogs, toggleUserStatus, initStore } from "./data/systemStore.js";
+import { initSession } from "./data/profileData.js";
 import { syncNavigation } from "./components/navigation.js";
 import { mountLogout } from "./components/auth.js";
+import { showToast, confirmAction } from "./components/feedback.js";
 
 function escapeHtml(value: string): string {
   const div = document.createElement("div");
@@ -8,7 +10,9 @@ function escapeHtml(value: string): string {
   return div.innerHTML;
 }
 
-function bootstrap(): void {
+async function bootstrap(): Promise<void> {
+  await initSession();
+  await initStore();
   const activeUser = syncNavigation();
   mountLogout();
 
@@ -63,7 +67,16 @@ function bootstrap(): void {
     if (statTotalUsers) statTotalUsers.textContent = String(users.length);
     if (statTotalItems) statTotalItems.textContent = String(items.filter((i) => !i.hidden).length);
     if (statTotalRequests) statTotalRequests.textContent = String(requests.length);
-    if (statTotalWaste) statTotalWaste.textContent = "1,200 kg";
+    if (statTotalWaste) statTotalWaste.textContent = "…";
+    // Real diverted weight from the server (same figure as the Impact page).
+    void fetch("/api/impact")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((impact: { kgDiverted?: number } | null) => {
+        if (statTotalWaste && impact && typeof impact.kgDiverted === "number") {
+          statTotalWaste.textContent = `${impact.kgDiverted} kg`;
+        }
+      })
+      .catch(() => undefined);
 
     // Render Users Table
     if (usersTbody) {
@@ -103,9 +116,19 @@ function bootstrap(): void {
         if (!isSelf) {
           const toggleBtn = tr.querySelector<HTMLButtonElement>('[data-action="toggle-status"]');
           if (toggleBtn) {
-            toggleBtn.addEventListener("click", () => {
-              toggleUserStatus(u.id, activeUser.name, activeUser.id);
-              alert(`Resident ${u.name} status updated to ${u.status === "Active" ? "Suspended" : "Active"}.`);
+            toggleBtn.addEventListener("click", async () => {
+              const suspending = u.status === "Active";
+              const ok = await confirmAction({
+                title: suspending ? "Suspend this account?" : "Reactivate this account?",
+                message: suspending
+                  ? `${u.name} will no longer be able to sign in or use the system until reactivated.`
+                  : `${u.name} will be able to sign in and use the system again.`,
+                confirmLabel: suspending ? "Suspend account" : "Reactivate account",
+                danger: suspending,
+              });
+              if (!ok) return;
+              await toggleUserStatus(u.id, activeUser.name, activeUser.id);
+              showToast(`Resident ${u.name} is now ${suspending ? "Suspended" : "Active"}.`);
               render();
             });
           }
@@ -151,4 +174,4 @@ function bootstrap(): void {
   render();
 }
 
-bootstrap();
+void bootstrap();

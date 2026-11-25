@@ -1,4 +1,6 @@
 import { refreshItems } from "./data/items.js";
+import { initStore } from "./data/systemStore.js";
+import { initSession } from "./data/profileData.js";
 import { mountFilterChips } from "./components/filterChips.js";
 import { mountSearchBar } from "./components/searchBar.js";
 import { filterItems, renderItemGrid } from "./components/itemGrid.js";
@@ -13,7 +15,9 @@ function requireElement<T extends HTMLElement>(id: string): T {
   return el as T;
 }
 
-function bootstrap(): void {
+async function bootstrap(): Promise<void> {
+  await initSession();
+  await initStore();
   syncNavigation();
   mountLogout();
   const grid = requireElement<HTMLElement>("item-grid");
@@ -70,9 +74,21 @@ function bootstrap(): void {
     window.location.href = "donate.html";
   });
 
+  // Hero impact number comes from the server too (same live figure as
+  // the Impact page) instead of the prototype's fixed "1,200".
+  void fetch("/api/impact")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((impact: { kgDiverted?: number } | null) => {
+      const el = document.getElementById("impact-kg");
+      if (el && impact && typeof impact.kgDiverted === "number") {
+        el.textContent = impact.kgDiverted.toLocaleString();
+      }
+    })
+    .catch(() => undefined);
+
   // Initial render
   setActiveChip("All");
   render();
 }
 
-bootstrap();
+void bootstrap();

@@ -42,4 +42,10 @@
 @import "components/modal.css";
 @import "components/management-tables.css";
 
+/* /improvement pass */
+@import "components/feedback.css";
+@import "components/notifications.css";
+@import "components/listings.css";
+@import "layout/responsive.css";
+
 

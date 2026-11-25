@@ -1,6 +1,9 @@
-import { getRequests, updateRequestStatus } from "./data/systemStore.js";
+import { getRequests, updateRequestStatus, initStore } from "./data/systemStore.js";
+import { initSession } from "./data/profileData.js";
 import { syncNavigation } from "./components/navigation.js";
 import { mountLogout } from "./components/auth.js";
+import { showToast, confirmAction } from "./components/feedback.js";
+import { cancelRequest } from "./data/systemStore.js";
 
 function escapeHtml(value: string): string {
   const div = document.createElement("div");
@@ -8,7 +11,9 @@ function escapeHtml(value: string): string {
   return div.innerHTML;
 }
 
-function bootstrap(): void {
+async function bootstrap(): Promise<void> {
+  await initSession();
+  await initStore();
   const activeUser = syncNavigation();
   mountLogout();
 
@@ -121,9 +126,14 @@ function bootstrap(): void {
             }
           `
               : `
-            <span style="font-size:12px; color:var(--c-muted);">
+            <span style="font-size:12px; color:var(--c-muted); display:block; margin-bottom:8px;">
               ${req.status === "Pending" ? "Awaiting provider response" : req.status === "Accepted" ? "Approved! Ready for pickup" : req.status === "Completed" ? "Exchange complete" : "Declined by provider"}
             </span>
+            ${
+              req.requesterId === activeUser.id && req.status === "Pending"
+                ? `<button class="btn--sm btn--danger" data-action="cancel" data-id="${req.id}">Cancel Request</button>`
+                : ""
+            }
           `
           }
         </div>
@@ -136,29 +146,51 @@ function bootstrap(): void {
         const completeBtn = card.querySelector<HTMLButtonElement>('[data-action="complete"]');
 
         if (acceptBtn) {
-          acceptBtn.addEventListener("click", () => {
-            updateRequestStatus(req.id, "Accepted", activeUser.name);
-            alert(`Request for "${req.itemTitle}" accepted! Item is now Reserved.`);
+          acceptBtn.addEventListener("click", async () => {
+            await updateRequestStatus(req.id, "Accepted", activeUser.name);
+            showToast(`Request for "${req.itemTitle}" accepted! The item is now Reserved.`);
             render();
           });
         }
 
         if (rejectBtn) {
-          rejectBtn.addEventListener("click", () => {
-            if (confirm(`Decline request from ${req.requesterName}?`)) {
-              updateRequestStatus(req.id, "Rejected", activeUser.name);
+          rejectBtn.addEventListener("click", async () => {
+            if (await confirmAction({ title: "Decline this request?", message: `Decline the request from ${req.requesterName} for "${req.itemTitle}"? The item will become Available again.`, confirmLabel: "Decline request", danger: true })) {
+              await updateRequestStatus(req.id, "Rejected", activeUser.name);
+              showToast(`Request for "${req.itemTitle}" declined.`, "info");
               render();
             }
           });
         }
 
         if (completeBtn) {
-          completeBtn.addEventListener("click", () => {
-            updateRequestStatus(req.id, "Completed", activeUser.name);
-            alert(`Great work! Transfer for "${req.itemTitle}" marked Completed. ReUse impact recorded!`);
+          completeBtn.addEventListener("click", async () => {
+            await updateRequestStatus(req.id, "Completed", activeUser.name);
+            showToast(`Great work! Transfer for "${req.itemTitle}" marked Completed. ReUse impact recorded!`);
             render();
           });
         }
+      }
+
+      // Bind "cancel my own request" on the Sent tab
+      const cancelBtn = card.querySelector<HTMLButtonElement>('[data-action="cancel"]');
+      if (cancelBtn) {
+        cancelBtn.addEventListener("click", async () => {
+          const ok = await confirmAction({
+            title: "Cancel this request?",
+            message: `Cancel your request for "${req.itemTitle}"? The item will become available for others.`,
+            confirmLabel: "Cancel request",
+            danger: true,
+          });
+          if (!ok) return;
+          try {
+            await cancelRequest(req.id);
+            showToast(`Your request for "${req.itemTitle}" was cancelled.`, "info");
+          } catch {
+            showToast("Could not cancel that request. It may no longer be pending.", "error");
+          }
+          render();
+        });
       }
 
       listContainer.append(card);
@@ -186,4 +218,4 @@ function bootstrap(): void {
   render();
 }
 
-bootstrap();
+void bootstrap();

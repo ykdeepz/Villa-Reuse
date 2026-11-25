@@ -127,8 +127,12 @@ async function bootstrap(): Promise<void> {
                 danger: suspending,
               });
               if (!ok) return;
-              await toggleUserStatus(u.id, activeUser.name, activeUser.id);
-              showToast(`Resident ${u.name} is now ${suspending ? "Suspended" : "Active"}.`);
+              try {
+                await toggleUserStatus(u.id, activeUser.name, activeUser.id);
+                showToast(`Resident ${u.name} is now ${suspending ? "Suspended" : "Active"}.`);
+              } catch (err) {
+                showToast(err instanceof Error ? err.message : "Could not change that account's status.", "error");
+              }
               render();
             });
           }

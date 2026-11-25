@@ -25,6 +25,12 @@ The work happened in two rounds:
   mode switch in the sidebar, a search box in the top bar, a small
   activity summary on the Profile page, and friendlier empty states
   (see *Changed*, *Improved/Added*, and *Removed*).
+- **Round 4 — the bug hunt.** A full QA pass over every flow
+  (accounts, items, requests, moderation, admin, impact, uploads,
+  edge cases) with an automated API suite and a real browser,
+  fixing everything it found — most importantly a set of ways a
+  signed-in member could cheat or break other members' data by
+  talking to the API directly (see *Bug hunt and hardening*).
 
 Nothing about the system's purpose changed in either round: neighbors
 donate or exchange pre-loved items, earn ReUse Coins, moderators keep
@@ -442,6 +448,57 @@ page).
 - **Why:** A blank area looks like a bug during a presentation; a
   message with a button looks like a product.
 
+### Bug hunt and hardening (Round 4)
+- **Before:** The pages behaved, but the API trusted the browser
+  far too much. Anyone signed in could, by sending hand-made
+  requests: download the whole database file (password hashes
+  included) and the server source, because the static file
+  server handed out every file in the project folder; post an
+  item claiming any ReUse Coin value (one test account credited
+  itself a million coins); reuse an existing item's id to
+  silently replace another member's listing; request their own
+  item, request an item that was already reserved or removed, or
+  forge who the request was addressed to; accept or complete
+  *somebody else's* request; and jump a request straight from
+  Pending to Completed. Deleting an item left its pending
+  requests orphaned forever, a resolved report could be resolved
+  again, and an oversized photo produced a bare HTML "500" page
+  instead of a proper error message.
+- **Now:** The server only serves the public site files — the
+  database, source code and project files answer 404. ReUse
+  Coins are computed on the server from the same category +
+  condition table the Post Item form shows, and item ids are
+  generated on the server. Requests are validated end to end:
+  the item must exist, be visible and be Available; you cannot
+  request your own item or hold two active requests for the same
+  item; the donor, title and timestamp are taken from the stored
+  item, not the request body. Only the item's owner (or staff, as
+  before) can answer a request, and only in the legal order
+  Pending → Accepted → Completed. Deleting an item closes its
+  active requests and notifies the requesters. Reports can only
+  be resolved once, and upload/parsing failures return the same
+  JSON errors as the rest of the API.
+- **Also fixed in the pages:** the Impact page's contributor
+  list now escapes member names (a name containing HTML was
+  being injected into the page); the item dialog decides "you
+  posted this item" by account id instead of by name, so a second
+  member with the same name is no longer locked out of
+  requesting; the Post Item form's "Like new" condition now
+  matches the spelling the filters and the edit form use, so
+  Like-New items actually appear when filtering by Like New;
+  the dialog no longer prints "undefined km away" for items
+  without a distance; the Post Item button can't be double-
+  submitted; two stylesheet imports pointed at files that didn't
+  exist (every page logged a 404 — one is corrected to the real
+  `trees-rows.css`, the other is the new `privacy-banner.css`
+  below); every page now has a favicon; and failed actions on
+  the Requests, Moderation and Admin pages now show the server's
+  error message instead of failing silently.
+- **Why:** A system that is only safe when everyone uses the
+  buttons as intended isn't safe at all — the presentation
+  includes a live demo, and these are exactly the cracks a panel
+  (or a curious classmate) would find.
+
 ### Presenter support (added)
 - **What was added:** This changelog, an expanded README (feature
   list, full API table, the impact formula, and a "how it works"
@@ -487,6 +544,20 @@ page).
   and the request itself was confirmed in the Sent tab). Tests ran
   against a throwaway copy with a fresh database, so the shipped
   demo data is untouched.
+- **Round 4:** A 98-check API suite (auth edge cases, static-file
+  exposure probes, coin/id forgery attempts, the full request
+  lifecycle with permission and transition checks, moderation,
+  admin, favorites, notifications, impact totals reconciled
+  against the database) plus browser tests (real sign-ins for
+  every role, posting through the form, condition filtering,
+  HTML-injection attempts in item titles and member names, the
+  mode switch, logout, mobile widths). The suite found 16 real
+  bugs — listed under *Bug hunt and hardening* above — and after
+  the fixes the same suite passes end to end (the one changed
+  expectation is the coin credit itself: the server now credits
+  the table value, e.g. 30 coins for an Others/Good item, instead
+  of whatever figure the client claimed). Tests again ran
+  against a throwaway copy with a fresh database.
 
 ---
 

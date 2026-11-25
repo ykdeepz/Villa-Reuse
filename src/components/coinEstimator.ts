@@ -10,7 +10,7 @@ const BASE: Record<string, number> = {
 const CONDITION_FACTOR: Record<Condition, number> = {
   Fair: 0.7,
   Good: 1,
-  "Like new": 1.3,
+  "Like New": 1.3,
 };
 
 export function estimateCoins(category: string, condition: Condition): number {

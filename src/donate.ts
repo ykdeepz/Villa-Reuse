@@ -74,8 +74,12 @@ async function bootstrap(): Promise<void> {
     window.location.href = "index.html";
   });
 
+  const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  let submitting = false;
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (submitting) return; // double-clicks must not post the item twice
 
     const title = nameInput.value.trim();
     if (!title) {
@@ -123,7 +127,17 @@ async function bootstrap(): Promise<void> {
     // Save to the server (with the photo file, if one was chosen).
     // The server credits the poster's ReUse Coins and returns the
     // updated profile, which becomes the active user.
-    const saved = await addItem(newItem, uploadedFile);
+    submitting = true;
+    if (submitBtn) submitBtn.disabled = true;
+    let saved: Awaited<ReturnType<typeof addItem>>;
+    try {
+      saved = await addItem(newItem, uploadedFile);
+    } catch (err) {
+      submitting = false;
+      if (submitBtn) submitBtn.disabled = false;
+      showToast(err instanceof Error ? err.message : "Could not publish that item. Please try again.", "error");
+      return;
+    }
     if (saved.user) setActiveUser(saved.user as Profile);
     void preview;
 

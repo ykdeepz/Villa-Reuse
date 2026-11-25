@@ -1,4 +1,4 @@
-const CONDITIONS = ["Fair", "Good", "Like new"] as const;
+const CONDITIONS = ["Fair", "Good", "Like New"] as const;
 
 export type Condition = (typeof CONDITIONS)[number];
 

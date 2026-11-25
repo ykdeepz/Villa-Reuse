@@ -166,7 +166,10 @@ const upload = multer({
     filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`),
   }),
   limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => cb(null, ["image/jpeg", "image/png"].includes(file.mimetype)),
+  fileFilter: (req, file, cb) => {
+    if (["image/jpeg", "image/png"].includes(file.mimetype)) return cb(null, true);
+    cb(new Error("Photos must be JPG or PNG images."));
+  },
 });
 
 // ------------------------------------------------------------- auth helpers
@@ -283,18 +286,53 @@ app.get("/api/state", requireAuth, (req, res) => {
   });
 });
 
+// ReUse Coin values are computed on the server from category + condition,
+// using the same table the Post Item form shows (see coinEstimator on the
+// client). The client's coin figure is never trusted — otherwise anyone
+// could mint themselves an unlimited balance.
+const COIN_BASE = { "Clothes": 20, "Appliances": 40, "Books": 15, "Others": 30 };
+const COIN_FACTOR = { "Fair": 0.7, "Good": 1, "Like New": 1.3 };
+function coinValueFor(category, condition) {
+  const base = COIN_BASE[category] ?? 20;
+  const factor = COIN_FACTOR[condition] ?? 1;
+  return Math.round(base * factor);
+}
+const CANON_CONDITIONS = { "fair": "Fair", "good": "Good", "like new": "Like New" };
+const canonCondition = (v) => CANON_CONDITIONS[String(v || "").trim().toLowerCase()] || null;
+const LISTING_TYPES = ["Donation", "Exchange"];
+
 app.post("/api/items", requireAuth, upload.single("photo"), (req, res) => {
   let payload = {};
   try { payload = JSON.parse(req.body.payload || "{}"); } catch { return res.status(400).json({ error: "Bad payload." }); }
-  if (!payload.title || !String(payload.title).trim()) return res.status(400).json({ error: "Item title is required." });
+  const title = String(payload.title || "").trim().slice(0, 200);
+  if (!title) return res.status(400).json({ error: "Item title is required." });
+  if (!CATEGORIES.includes(payload.category)) return res.status(400).json({ error: "Invalid category." });
+  const condition = canonCondition(payload.condition);
+  if (!condition) return res.status(400).json({ error: "Invalid condition." });
+  const listingType = LISTING_TYPES.includes(payload.listingType) ? payload.listingType : "Donation";
+  const distanceKm = Number.isFinite(Number(payload.distanceKm)) && Number(payload.distanceKm) >= 0 && Number(payload.distanceKm) <= 100
+    ? Number(payload.distanceKm) : 0.5;
+  // Only bundled stock photos may be referenced by name; anything else
+  // falls back to the default image (uploaded photos come via req.file).
+  const stockImage = typeof payload.image === "string" && payload.image.startsWith("assets/") ? payload.image : "assets/denim-jacket.png";
   const item = {
-    ...payload,
-    id: payload.id || `item_${Date.now()}`,
+    // The id is always generated here: honouring a client-supplied id let
+    // a post silently replace (hijack) another member's listing.
+    id: `item_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    title,
+    description: String(payload.description || "").slice(0, 5000),
+    category: payload.category,
+    condition,
+    listingType,
+    exchangeFor: listingType === "Exchange" ? String(payload.exchangeFor || "").slice(0, 200) : undefined,
     donorId: req.user.id,
     donorName: req.user.name,
     status: "Available",
     postedAgo: "Just now",
-    image: req.file ? `uploads/${req.file.filename}` : payload.image || "assets/denim-jacket.png",
+    distanceKm,
+    coins: coinValueFor(payload.category, condition),
+    details: `${condition} condition · ${payload.category}`,
+    image: req.file ? `uploads/${req.file.filename}` : stockImage,
   };
   putRow("items", item);
   // Credit the poster's ReUse Coins + shared count, like the original did.
@@ -309,12 +347,43 @@ app.post("/api/items", requireAuth, upload.single("photo"), (req, res) => {
   res.status(201).json({ item, user: publicUser(profile) });
 });
 
+function displayStamp(d = new Date()) {
+  return d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
 app.post("/api/requests", requireAuth, (req, res) => {
   const r = req.body || {};
   if (!r.itemId) return res.status(400).json({ error: "itemId is required." });
   const item = getRow("items", r.itemId);
-  if (!item) return res.status(404).json({ error: "Item not found." });
-  const request = { ...r, id: r.id || `req_${Date.now()}`, requesterId: req.user.id, requesterName: req.user.name, status: "Pending" };
+  if (!item || item.hidden) return res.status(404).json({ error: "Item not found." });
+  if (item.donorId === req.user.id) return res.status(400).json({ error: "You cannot request your own item." });
+  if (item.status !== "Available") return res.status(409).json({ error: "This item is not accepting requests right now." });
+  const duplicate = allRows("requests").some(
+    (x) => x.itemId === item.id && x.requesterId === req.user.id && ["Pending", "Accepted"].includes(x.status)
+  );
+  if (duplicate) return res.status(409).json({ error: "You already have an active request for this item." });
+  const type = item.listingType === "Exchange" ? "Exchange Proposal" : "Donation Request";
+  const exchangeOffer = type === "Exchange Proposal" ? String(r.exchangeOffer || "").trim().slice(0, 500) : undefined;
+  if (type === "Exchange Proposal" && !exchangeOffer) {
+    return res.status(400).json({ error: "Please describe what you offer in exchange." });
+  }
+  // Donor, title and timestamp come from the stored item / server clock —
+  // never from the request body, which anyone can forge.
+  const request = {
+    id: `req_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    itemId: item.id,
+    itemTitle: item.title,
+    requesterId: req.user.id,
+    requesterName: req.user.name,
+    donorId: item.donorId,
+    donorName: item.donorName,
+    type,
+    exchangeOffer,
+    note: String(r.note || "Interested in this item.").slice(0, 1000),
+    pickupTime: String(r.pickupTime || "To be arranged").slice(0, 200),
+    status: "Pending",
+    createdAt: displayStamp(),
+  };
   putRow("requests", request);
   item.status = "Requested";
   putRow("items", item);
@@ -328,6 +397,17 @@ app.patch("/api/requests/:id", requireAuth, (req, res) => {
   if (!request) return res.status(404).json({ error: "Request not found." });
   const status = (req.body || {}).status;
   if (!["Accepted", "Rejected", "Completed"].includes(status)) return res.status(400).json({ error: "Invalid status." });
+  // Only the item's owner may answer a request (moderators and the admin
+  // keep the oversight access the Requests page gives them). The requester
+  // and unrelated members must never accept/complete their own requests.
+  const isStaff = ["Community Moderator", "System Administrator"].includes(req.user.role);
+  if (request.donorId !== req.user.id && !isStaff) {
+    return res.status(403).json({ error: "Only the item's owner can respond to this request." });
+  }
+  const TRANSITIONS = { Pending: ["Accepted", "Rejected"], Accepted: ["Completed"], Rejected: [], Completed: [] };
+  if (!(TRANSITIONS[request.status] || []).includes(status)) {
+    return res.status(400).json({ error: `A ${request.status.toLowerCase()} request cannot become ${status.toLowerCase()}.` });
+  }
   request.status = status;
   putRow("requests", request);
   const item = getRow("items", request.itemId);
@@ -361,7 +441,19 @@ app.delete("/api/requests/:id", requireAuth, (req, res) => {
 app.post("/api/reports", requireAuth, (req, res) => {
   const r = req.body || {};
   if (!r.itemId) return res.status(400).json({ error: "itemId is required." });
-  const report = { ...r, id: r.id || `rep_${Date.now()}`, reporterId: req.user.id, reporterName: req.user.name, status: "Open" };
+  const item = getRow("items", r.itemId);
+  if (!item) return res.status(404).json({ error: "Item not found." });
+  const report = {
+    id: `rep_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    itemId: item.id,
+    itemTitle: item.title,
+    reporterId: req.user.id,
+    reporterName: req.user.name,
+    reason: String(r.reason || "Misleading description").slice(0, 200),
+    details: String(r.details || "Reported for community review.").slice(0, 1000),
+    status: "Open",
+    createdAt: displayStamp(),
+  };
   putRow("reports", report);
   addAuditLog({ actor: report.reporterName, role: "Community Member", action: "Listing Reported", details: `Reported "${report.itemTitle}" for: ${report.reason}` });
   res.status(201).json({ report });
@@ -372,6 +464,7 @@ app.patch("/api/reports/:id", requireAuth, requireRole("Community Moderator"), (
   if (!report) return res.status(404).json({ error: "Report not found." });
   const status = (req.body || {}).status;
   if (!["Dismissed", "Listing Removed"].includes(status)) return res.status(400).json({ error: "Invalid status." });
+  if (report.status !== "Open") return res.status(400).json({ error: "This report has already been resolved." });
   report.status = status;
   putRow("reports", report);
   if (status === "Listing Removed") {
@@ -488,8 +581,9 @@ app.patch("/api/items/:id", requireAuth, (req, res) => {
     item.category = b.category;
   }
   if (b.condition !== undefined) {
-    if (!CONDITIONS.includes(b.condition)) return res.status(400).json({ error: "Invalid condition." });
-    item.condition = b.condition;
+    const condition = canonCondition(b.condition);
+    if (!condition) return res.status(400).json({ error: "Invalid condition." });
+    item.condition = condition;
   }
   item.details = `${item.condition} condition · ${item.category}`;
   putRow("items", item);
@@ -503,6 +597,15 @@ app.delete("/api/items/:id", requireAuth, (req, res) => {
   if (item.donorId !== req.user.id) return res.status(403).json({ error: "You can only delete your own items." });
   db.prepare("DELETE FROM items WHERE id = ?").run(item.id);
   db.prepare("DELETE FROM favorites WHERE item_id = ?").run(item.id);
+  // Active requests for a deleted item can never be fulfilled — close them
+  // out and tell the requesters, instead of leaving orphaned "Pending"
+  // cards on their Requests page. Completed history is kept.
+  for (const r of allRows("requests")) {
+    if (r.itemId === item.id && ["Pending", "Accepted"].includes(r.status)) {
+      db.prepare("DELETE FROM requests WHERE id = ?").run(r.id);
+      notify(r.requesterId, "request_cancelled", `The item "${item.title}" you requested was removed by its owner, so your request was closed.`);
+    }
+  }
   addAuditLog({ actor: req.user.name, role: req.user.role, action: "Item Deleted", details: `Deleted "${item.title}"` });
   res.json({ ok: true });
 });
@@ -528,9 +631,38 @@ app.patch("/api/users/:id/toggle-status", requireAuth, requireRole("System Admin
 });
 
 // -------------------------------------------------------------- static site
+// Only the public site files may be served. The database (with its password
+// hashes), the server source, seed data and project files must never be
+// downloadable — express.static(ROOT) used to happily serve all of them.
+const BLOCKED_PREFIXES = ["/data", "/server", "/src", "/node_modules", "/screenshots"];
+const BLOCKED_FILES = new Set([
+  "/server.js", "/package.json", "/package-lock.json", "/tsconfig.json",
+  "/README.md", "/CHANGELOG.md", "/BUILD_REPORT.md", "/.gitignore",
+]);
+app.use((req, res, next) => {
+  const p = decodeURIComponent(req.path);
+  if (BLOCKED_FILES.has(p) || BLOCKED_PREFIXES.some((pre) => p === pre || p.startsWith(pre + "/")) || p.split("/").some((seg) => seg.startsWith("."))) {
+    return res.status(404).send("404 Not Found");
+  }
+  next();
+});
 app.use("/uploads", express.static(UPLOAD_DIR));
 app.use(express.static(ROOT, { index: "index.html" }));
 app.use((req, res) => res.status(404).send("404 Not Found"));
+
+// Upload and body-parsing failures land here — answer with JSON like the
+// rest of the API instead of Express's default HTML error page (an
+// oversized photo used to produce a bare "500" HTML page).
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err && err.type === "entity.too.large") return res.status(413).json({ error: "That upload is too large." });
+  if (err && err.code === "LIMIT_FILE_SIZE") return res.status(400).json({ error: "Photo must be 10 MB or smaller." });
+  if (err instanceof multer.MulterError) return res.status(400).json({ error: err.message });
+  if (err instanceof SyntaxError && "body" in err) return res.status(400).json({ error: "Malformed request body." });
+  if (err && err.message === "Photos must be JPG or PNG images.") return res.status(400).json({ error: err.message });
+  console.error("Server error:", err);
+  return res.status(500).json({ error: "Something went wrong on the server." });
+});
 
 function startServer(p) {
   const server = app.listen(p, () => {

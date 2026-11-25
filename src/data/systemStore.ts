@@ -53,6 +53,7 @@ interface StateResponse {
  *  after initSession(). Safe to call again to refresh. */
 export async function initStore(): Promise<void> {
   const res = await fetch("/api/state");
+  if (res.status === 401) return; // signed out — initSession is already redirecting to the login page
   if (!res.ok) throw new Error(`Failed to load data from server (${res.status})`);
   const data = (await res.json()) as StateResponse;
   itemsCache = data.items;

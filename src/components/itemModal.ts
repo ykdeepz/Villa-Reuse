@@ -11,7 +11,9 @@ function escapeHtml(value: string): string {
 
 export function openItemModal(item: Item, onUpdate?: () => void): void {
   const activeUser = getActiveUser();
-  const isDonor = activeUser.name === item.donorName;
+  // Ownership is an id check, never a name check — two members can share a
+  // name, and the wrong person would be told "you posted this item".
+  const isDonor = activeUser.id === item.donorId;
   const isExchange = item.listingType === "Exchange";
 
   let modalOverlay = document.getElementById("item-modal-overlay");
@@ -39,7 +41,7 @@ export function openItemModal(item: Item, onUpdate?: () => void): void {
           <div class="modal-header">
             <span class="card__tag">${escapeHtml(item.category)}</span>
             <span class="modal-condition">Condition: <strong>${escapeHtml(item.condition)}</strong></span>
-            <span class="modal-distance">${item.distanceKm} km away</span>
+            <span class="modal-distance">${typeof item.distanceKm === "number" ? `${item.distanceKm} km away` : "Nearby"}</span>
           </div>
 
           <h2 class="modal-title" id="modal-item-title">${escapeHtml(item.title)}</h2>
@@ -74,7 +76,7 @@ export function openItemModal(item: Item, onUpdate?: () => void): void {
               <p>You posted this item as <strong>${escapeHtml(item.donorName)}</strong>. Manage incoming claims in <a href="requests.html">Request Management</a>.</p>
             </div>
           `
-              : item.status !== "Available" && item.status !== "Requested"
+              : item.status !== "Available"
               ? `
             <div class="modal-notice modal-notice--warning">
               <p>This item is currently <strong>${escapeHtml(item.status)}</strong> and not accepting new requests.</p>
@@ -189,7 +191,12 @@ export function openItemModal(item: Item, onUpdate?: () => void): void {
         createdAt: "Just now",
       };
 
-      await createRequest(newReq);
+      try {
+        await createRequest(newReq);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Could not send that request. Please try again.", "error");
+        return;
+      }
       showToast(`Your ${newReq.type.toLowerCase()} has been sent to ${item.donorName}. Track its status in Request Management.`);
       closeModal();
       if (onUpdate) onUpdate();
@@ -215,7 +222,12 @@ export function openItemModal(item: Item, onUpdate?: () => void): void {
         createdAt: "Just now",
       };
 
-      await submitReport(newReport);
+      try {
+        await submitReport(newReport);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Could not submit that report. Please try again.", "error");
+        return;
+      }
       showToast(`Thank you, ${activeUser.name}. Your report on "${item.title}" has been submitted to the Community Moderator queue.`);
       closeModal();
     });

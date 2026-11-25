@@ -1,13 +1,19 @@
 import type { Contributor } from "../data/impactData.js";
 
+function escapeHtml(value: string): string {
+  const div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
+}
+
 export function createContributorRow(person: Contributor, index: number): HTMLElement {
   const li = document.createElement("li");
   li.className = `contributor${person.isSelf ? " contributor--self" : ""}`;
   li.innerHTML = `
     <span class="contributor__rank">${String(index + 1).padStart(2, "0")}</span>
-    <span class="contributor__avatar">${person.initials}</span>
+    <span class="contributor__avatar">${escapeHtml(person.initials)}</span>
     <span>
-      <span class="contributor__name">${person.name}</span>
+      <span class="contributor__name">${escapeHtml(person.name)}</span>
       <p class="contributor__items">${person.itemsReused} items reused</p>
     </span>
     <span class="contributor__figures">

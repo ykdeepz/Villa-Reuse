@@ -1,0 +1,21 @@
+/* "Do not sell or share my personal info" button on the Profile page.
+   Quiet footer-style text button — present but never louder than the
+   content above it. */
+.privacy-banner {
+  display: block;
+  margin: 18px auto 4px;
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--c-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.privacy-banner:hover {
+  color: var(--c-green-700);
+}

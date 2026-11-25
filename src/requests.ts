@@ -149,8 +149,12 @@ async function bootstrap(): Promise<void> {
 
         if (acceptBtn) {
           acceptBtn.addEventListener("click", async () => {
-            await updateRequestStatus(req.id, "Accepted", activeUser.name);
-            showToast(`Request for "${req.itemTitle}" accepted! The item is now Reserved.`);
+            try {
+              await updateRequestStatus(req.id, "Accepted", activeUser.name);
+              showToast(`Request for "${req.itemTitle}" accepted! The item is now Reserved.`);
+            } catch (err) {
+              showToast(err instanceof Error ? err.message : "Could not accept that request.", "error");
+            }
             render();
           });
         }
@@ -158,8 +162,12 @@ async function bootstrap(): Promise<void> {
         if (rejectBtn) {
           rejectBtn.addEventListener("click", async () => {
             if (await confirmAction({ title: "Decline this request?", message: `Decline the request from ${req.requesterName} for "${req.itemTitle}"? The item will become Available again.`, confirmLabel: "Decline request", danger: true })) {
-              await updateRequestStatus(req.id, "Rejected", activeUser.name);
-              showToast(`Request for "${req.itemTitle}" declined.`, "info");
+              try {
+                await updateRequestStatus(req.id, "Rejected", activeUser.name);
+                showToast(`Request for "${req.itemTitle}" declined.`, "info");
+              } catch (err) {
+                showToast(err instanceof Error ? err.message : "Could not decline that request.", "error");
+              }
               render();
             }
           });
@@ -167,8 +175,12 @@ async function bootstrap(): Promise<void> {
 
         if (completeBtn) {
           completeBtn.addEventListener("click", async () => {
-            await updateRequestStatus(req.id, "Completed", activeUser.name);
-            showToast(`Great work! Transfer for "${req.itemTitle}" marked Completed. ReUse impact recorded!`);
+            try {
+              await updateRequestStatus(req.id, "Completed", activeUser.name);
+              showToast(`Great work! Transfer for "${req.itemTitle}" marked Completed. ReUse impact recorded!`);
+            } catch (err) {
+              showToast(err instanceof Error ? err.message : "Could not complete that request.", "error");
+            }
             render();
           });
         }

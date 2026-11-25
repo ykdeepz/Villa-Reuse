@@ -118,8 +118,12 @@ async function bootstrap(): Promise<void> {
 
       if (dismissBtn) {
         dismissBtn.addEventListener("click", async () => {
-          await resolveReport(rep.id, "Dismissed", activeUser.name);
-          showToast(`Report on "${rep.itemTitle}" dismissed. The listing remains active.`, "info");
+          try {
+            await resolveReport(rep.id, "Dismissed", activeUser.name);
+            showToast(`Report on "${rep.itemTitle}" dismissed. The listing remains active.`, "info");
+          } catch (err) {
+            showToast(err instanceof Error ? err.message : "Could not dismiss that report.", "error");
+          }
           render();
         });
       }
@@ -127,8 +131,12 @@ async function bootstrap(): Promise<void> {
       if (removeBtn) {
         removeBtn.addEventListener("click", async () => {
           if (await confirmAction({ title: "Remove this listing?", message: `Remove "${rep.itemTitle}" from the community discover feed? Members will no longer see it.`, confirmLabel: "Remove listing", danger: true })) {
-            await resolveReport(rep.id, "Listing Removed", activeUser.name);
-            showToast(`Listing "${rep.itemTitle}" removed and hidden from community search.`);
+            try {
+              await resolveReport(rep.id, "Listing Removed", activeUser.name);
+              showToast(`Listing "${rep.itemTitle}" removed and hidden from community search.`);
+            } catch (err) {
+              showToast(err instanceof Error ? err.message : "Could not remove that listing.", "error");
+            }
             render();
           }
         });
